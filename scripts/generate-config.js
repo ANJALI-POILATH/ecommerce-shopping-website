@@ -13,10 +13,13 @@ function readDotEnv(file) {
     const key = trimmed.slice(0, i).trim();
     let value = trimmed.slice(i + 1).trim();
     if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1);
-    if (process.env[key] === undefined) process.env[key] = value;
+    // Unset or empty values (e.g. missing GitHub repo variables) fall through to later files.
+    if (!process.env[key]) process.env[key] = value;
   }
 }
 readDotEnv(path.resolve(__dirname, '..', '.env'));
+// Fallback: committed public defaults (Firebase web config is public, not a secret).
+readDotEnv(path.resolve(__dirname, '..', '.env.example'));
 
 const list = (name) => (process.env[name] || '').split(',').map(v => v.trim()).filter(Boolean);
 const cfg = {
